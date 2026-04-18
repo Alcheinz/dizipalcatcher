@@ -1,0 +1,16 @@
+#!/bin/zsh
+
+DIZIPAL_PY_PATH="$HOME/Desktop/DizipalCatcher/dizipal.py"
+
+if [[ -z "$1" ]]; then
+    echo "Kullanım: dizipal \"<url>\""
+    echo "Örnek: dizipal \"https://dizipal1549.com/movies/soyut-disavurumcu-bir-dostlugun-anatomisi-veyahut-yan-yana\""
+    exit 1
+fi
+
+if [[ ! -f "$DIZIPAL_PY_PATH" ]]; then
+    echo "Hata: dizipal.py scripti bulunamadı. Lütfen $DIZIPAL_PY_PATH adresinde olduğundan emin olun."
+    exit 1
+fi
+
+python3 "$DIZIPAL_PY_PATH" "$1"
