@@ -86,11 +86,17 @@ def extract_and_download(url):
                         break
                     time.sleep(1)
                     
+            except KeyboardInterrupt:
+                console.print("\n[bold red]✕ İşlem iptal edildi! (CTRL+C) Çıkış yapılıyor.[/bold red]")
+                os._exit(0)
             except Exception as e:
                 pass
             finally:
-                cookies = context.cookies()
-                browser.close()
+                try:
+                    cookies = context.cookies()
+                    browser.close()
+                except Exception:
+                    pass
 
     if not video_url:
         console.print(Panel("[bold red]Hata: Video akış linki sayfada bulunamadı.[/bold red]\n[yellow]Cloudflare Captcha paneline takılmış olabilirsiniz veya girdiğiniz sitede video öğesi yok.[/yellow]\n[italic]Script içerisindeki 'headless=True' komutunu 'False' yaparak manuel doğrulama deneyebilirsiniz.[/italic]", title="Video Bulunamadı!", border_style="red"))
@@ -154,6 +160,9 @@ def extract_and_download(url):
             video_ts_urls = get_ts_list(video_variant_url)
             audio_ts_urls = get_ts_list(audio_variant_url) if audio_variant_url else []
             
+        except KeyboardInterrupt:
+            console.print("\n[bold red]✕ İşlem iptal edildi! (CTRL+C) Çıkış yapılıyor.[/bold red]")
+            os._exit(0)
         except Exception as e:
             console.print(f"[bold red]Ağ Hatası: Sunucudan çalma listesi alınamadı ({str(e)})[/bold red]")
             sys.exit(1)
@@ -212,6 +221,8 @@ def extract_and_download(url):
         return idx, False, last_error
 
     try:
+        console.print("\n[cyan]💡 İpucu: İndirme sırasında işlemi iptal etmek ve önbellek dosyalarını temizlemek için CTRL+C tuşlarına basabilirsiniz.[/cyan]")
+        
         def process_queue(ts_urls, prefix, label, color):
             console.print(f"\n[bold {color}]▶ {label} İndirmesi Başlıyor...[/bold {color}]")
             out_file = os.path.join(downloads_dir, f"{movie_title}_{prefix}.ts")
@@ -227,14 +238,15 @@ def extract_and_download(url):
                 
                 task_id = progress.add_task(f"{label} İndiriliyor...", total=len(ts_urls))
                 
-                with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-                    future_chunks = {executor.submit(download_chunk, i, l_url, prefix): i for i, l_url in enumerate(ts_urls)}
-                    for future in concurrent.futures.as_completed(future_chunks):
-                        i, success, err_msg = future.result()
-                        if success:
-                            progress.update(task_id, advance=1)
-                        else:
-                            console.print(f"[bold red][-] Hata:[/bold red] {label} Parça #{i} indirilemedi! ({err_msg})", highlight=False)
+                executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
+                future_chunks = {executor.submit(download_chunk, i, l_url, prefix): i for i, l_url in enumerate(ts_urls)}
+                for future in concurrent.futures.as_completed(future_chunks):
+                    i, success, err_msg = future.result()
+                    if success:
+                        progress.update(task_id, advance=1)
+                    else:
+                        console.print(f"[bold red][-] Hata:[/bold red] {label} Parça #{i} indirilemedi! ({err_msg})", highlight=False)
+                executor.shutdown(wait=False)
             
             with console.status(f"[bold {color}]{label} Bütünleştiriliyor... Lütfen bekleyin.[/bold {color}]"):
                 with open(out_file, "wb") as f_out:
@@ -275,20 +287,25 @@ def extract_and_download(url):
             os.remove(video_out)
         if 'audio_out' in locals() and audio_out and os.path.exists(audio_out):
             os.remove(audio_out)
-        console.print("[green]Sistem başarıyla temizlendi.[/green]")
-        sys.exit(0)
+        console.print("[green]Sistem başarıyla temizlendi. Çıkış yapılıyor.[/green]")
+        os._exit(0)
     except Exception as e:
         console.print(f"\n[bold red][!] Hata: İndirme işlemi başarısız oldu. Nedeni:[/bold red] {e}")
+        os._exit(1)
 
 if __name__ == "__main__":
-    print_banner()
-    
-    if len(sys.argv) > 1:
-        target_url = sys.argv[1]
-    else:
-        target_url = Prompt.ask("[bold cyan]Lütfen indirmek istediğiniz Dizipal linkini yapıştırın[/bold cyan]")
-        if not target_url:
-            console.print("[red]Geçerli bir link girmediniz.[/red]")
-            sys.exit(1)
-            
-    extract_and_download(target_url.strip())
+    try:
+        print_banner()
+        
+        if len(sys.argv) > 1:
+            target_url = sys.argv[1]
+        else:
+            target_url = Prompt.ask("[bold cyan]Lütfen indirmek istediğiniz Dizipal linkini yapıştırın[/bold cyan]")
+            if not target_url:
+                console.print("[red]Geçerli bir link girmediniz.[/red]")
+                sys.exit(1)
+                
+        extract_and_download(target_url.strip())
+    except KeyboardInterrupt:
+        console.print("\n[bold red]✕ İşlem iptal edildi! (CTRL+C) Çıkış yapılıyor.[/bold red]")
+        os._exit(0)
