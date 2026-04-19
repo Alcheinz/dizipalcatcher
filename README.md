@@ -18,7 +18,7 @@ Geliştirici: **Alcheinz** ([@Alcheinz](https://github.com/Alcheinz))
 
 ---
 
-## 🛠 Kurulum & Başlangıç (Arkadaşın için Notlar)
+## 🛠 Kurulum & Başlangıç
 
 Projeyi kendi bilgisayarına kurmak veya klonlamak isteyen geliştiriciler için tam adımlar:
 
