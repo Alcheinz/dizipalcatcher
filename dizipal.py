@@ -20,7 +20,7 @@ def extract_and_download(url):
     cookies = None
     
     with sync_playwright() as p:
-        browser = p.firefox.launch(headless=False)
+        browser = p.firefox.launch(headless=True)
         context = browser.new_context(
             user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:135.0) Gecko/20100101 Firefox/135.0",
             viewport={"width": 1280, "height": 720}
